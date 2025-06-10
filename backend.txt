@@ -1,0 +1,77 @@
+notion_backend_plan.txt   –   Minimal Notion backend overview
+=============================================================
+Purpose: provide the thinnest possible interface to read/write
+Notion so later features can rely on a stable API.
+
+-------------------------------------------------------------
+Directory & file checklist
+-------------------------------------------------------------
+1. db/notion_client.py
+   • Wraps official `notion-client` with auth from NOTION_TOKEN.
+   • Exposes a single instantiated client: `notion = get_client()`
+     (lazy-initialized on first call).
+
+2. db/health.py
+   • Contains `DB_ID = NOTION_PAGE_ID` (for now, all DBs share this ID).
+   • Defines a `HealthRecord` dataclass (date, metric, value).
+   • Functions: `create(record)`, `query(filter_dict)`, `update(page_id, data)`
+     – all use `notion_client.py`.
+
+3. db/knowledge.py
+   • Same pattern as health.py but with `KnowledgeRecord` dataclass
+     (text, created_ts, tags).
+   • Mirrors `create / query / update` signatures.
+
+-------------------------------------------------------------
+Implementation steps (commit after each)
+-------------------------------------------------------------
+0. Ensure NOTION_TOKEN and NOTION_PAGE_ID exist in `.env`.
+
+1. Build **notion_client.py**
+   – import `config` for NOTION_TOKEN.
+   – create `get_client()` that memoizes the Notion client.
+
+2. Build **health.py** skeleton
+   – add placeholder DB_ID.
+   – implement `create`, `query`, `update` with minimal error handling.
+
+3. Build **knowledge.py** skeleton
+   – identical structure to health.py.
+
+4. Add simple integration test `tests/test_notion_smoke.py`
+   – uses mocking to simulate Notion client;
+     asserts functions return without exception.
+
+5. Update **main.py** with a “smoke” command:
+   – `python main.py smoke` → queries Knowledge DB and prints count.
+
+-------------------------------------------------------------
+Workflow & CI
+-------------------------------------------------------------
+• The CI workflow must:
+    - Install hard-pinned dependencies (`notion-client==[latest]`, `python-dotenv`)
+    - Run all tests including `test_notion_smoke.py` (which uses mocks, requires no real tokens)
+    - Lint code as before
+• Do **not** require or expose real Notion tokens in CI at this stage.
+• Future: Optionally add a live test job if you decide to test with real Notion later.
+
+-------------------------------------------------------------
+Environment variable reference
+-------------------------------------------------------------
+All secrets and API keys must be set via `.env` (never committed).
+`.env.example` must include at least:
+    NOTION_TOKEN=your_notion_token_here
+    NOTION_PAGE_ID=your_page_id_here
+
+-------------------------------------------------------------
+Rules & notes
+-------------------------------------------------------------
+• No additional layers, helpers, or abstractions.
+• No schema migration tooling yet—hard-code IDs until a later phase.
+• Logging via existing `config.py` only.
+• All Notion errors should raise; don’t hide them with retries for now.
+• Keep everything minimal—add only what is listed here.
+
+-------------------------------------------------------------
+End of notion_backend_plan.txt
+-------------------------------------------------------------
