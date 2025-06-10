@@ -6,7 +6,6 @@ our backend functions work without requiring real Notion tokens.
 
 from unittest.mock import Mock, patch
 from datetime import date, datetime
-import pytest
 
 from db import health, knowledge
 
