@@ -7,10 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from db.notion_client import get_client
-from config import NOTION_PAGE_ID
-
-# For now, all DBs share this ID
-DB_ID = NOTION_PAGE_ID
+from config import KNOWLEDGE_DB_ID
 
 
 @dataclass
@@ -39,7 +36,7 @@ def create(record: KnowledgeRecord) -> str:
     tag_options = [{"name": tag} for tag in record.tags]
     
     response = notion.pages.create(
-        parent={"database_id": DB_ID},
+        parent={"database_id": KNOWLEDGE_DB_ID},
         properties={
             "Text": {
                 "title": [{"text": {"content": record.text}}]
@@ -70,7 +67,7 @@ def query(filter_dict: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """
     notion = get_client()
     
-    query_params = {"database_id": DB_ID}
+    query_params = {"database_id": KNOWLEDGE_DB_ID}
     if filter_dict:
         query_params["filter"] = filter_dict
     

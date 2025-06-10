@@ -7,10 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Dict, List, Any, Optional
 from db.notion_client import get_client
-from config import NOTION_PAGE_ID
-
-# For now, all DBs share this ID
-DB_ID = NOTION_PAGE_ID
+from config import HEALTH_DB_ID
 
 
 @dataclass
@@ -36,7 +33,7 @@ def create(record: HealthRecord) -> str:
     notion = get_client()
     
     response = notion.pages.create(
-        parent={"database_id": DB_ID},
+        parent={"database_id": HEALTH_DB_ID},
         properties={
             "Date": {
                 "date": {"start": record.date.isoformat()}
@@ -67,7 +64,7 @@ def query(filter_dict: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """
     notion = get_client()
     
-    query_params = {"database_id": DB_ID}
+    query_params = {"database_id": HEALTH_DB_ID}
     if filter_dict:
         query_params["filter"] = filter_dict
     
