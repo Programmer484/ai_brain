@@ -1,0 +1,60 @@
+BOOTSTRAP.md   –   Initial setup instructions
+================================================
+Purpose: establish the absolute minimum scaffold so future code can run,
+be tested, and be shared.  **Add nothing beyond what is listed here.**
+
+--------------------------------------------------------------------
+Directory & file checklist
+--------------------------------------------------------------------
+1. Top-level folders (create only these three):
+   • db/        – Notion DB interface + schema modules  
+   • ingest/    – All input/ingestion code (CLI first)  
+   • ai/        – AI logic (tagging, reminders, embeddings)
+
+2. Support files:
+   • .gitignore           – exclude .env, __pycache__/, etc.  
+   • pyproject.toml *or* requirements.txt  
+       └─ must list only: notion-client, python-dotenv  
+   • .env.example         – placeholders for NOTION_TOKEN, OPENAI_KEY, etc.
+
+--------------------------------------------------------------------
+Config & logging
+--------------------------------------------------------------------
+3. config.py  
+   • Loads env vars via python-dotenv (`load_dotenv()`).  
+   • Exposes settings as module-level constants.  
+   • Initializes basic `logging` to stdout (INFO level, timestamped).
+
+--------------------------------------------------------------------
+Entrypoint
+--------------------------------------------------------------------
+4. main.py  
+   • When run, prints `Hello, Personal AI` (placeholder).  
+   • Remains the single entrypoint for all future tasks.
+
+--------------------------------------------------------------------
+Testing & CI
+--------------------------------------------------------------------
+5. tests/test_dummy.py  
+   • One trivial test that always passes.
+
+6. .github/workflows/ci.yml  
+   • Steps:  
+     1. Checkout  
+     2. Install deps  
+     3. Run `python -m pip install .` (or `pip install -r requirements.txt`)  
+     4. Run linter (ruff/flake8)  
+     5. Run `pytest`
+
+--------------------------------------------------------------------
+Workflow rules
+--------------------------------------------------------------------
+• Commit after completing each numbered section above.  
+• Do **not** create additional folders, files, or code until the project
+  owner approves the next phase.  
+• All secrets must load from `.env`—never hard-code.  
+• Keep code flat and explicit; avoid clever abstractions at this stage.
+
+--------------------------------------------------------------------
+End of BOOTSTRAP.md
+--------------------------------------------------------------------
