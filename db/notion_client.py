@@ -31,7 +31,3 @@ def get_client():
         _notion_client = Client(auth=NOTION_TOKEN)
     
     return _notion_client
-
-
-# Convenience variable for direct access
-notion = get_client 

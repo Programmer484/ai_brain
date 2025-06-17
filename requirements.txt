@@ -1,4 +1,5 @@
 notion-client
 python-dotenv
 pytest
-ruff 
+ruff
+openai 
