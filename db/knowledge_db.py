@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-from config import KNOWLEDGE_DB_ID
+import config
 from db.notion_client import get_client
-from db.registry import get_database_tags
+from db.registry import get_database_tags, build_notion_properties
 
 
 @dataclass
@@ -24,8 +24,20 @@ class Record:
 
 # Schema definition for knowledge database
 SCHEMA = {
-    "update_fields": {
-        "Tags": {"multi_select": [{"name": "updated"}]}
+    "database_id": "KNOWLEDGE_DB_ID",
+    "fields": {
+        "title": {
+            "notion_name": "Title",
+            "notion_type": "title"
+        },
+        "tags": {
+            "notion_name": "Tags",
+            "notion_type": "multi_select"
+        },
+        "why": {
+            "notion_name": "Why",
+            "notion_type": "rich_text"
+        }
     }
 }
 
@@ -50,71 +62,20 @@ def create(record: Record) -> str:
         Exception: If Notion API call fails
     """
     notion = get_client()
-        
-    # Convert tags list to Notion multi_select format
-    tag_options = [{"name": tag} for tag in record.tags]
+    
+    # Build properties from schema
+    properties = build_notion_properties(record, SCHEMA)
+    
+    # Get database ID from config
+    database_id = getattr(config, SCHEMA["database_id"])
     
     response = notion.pages.create(
-        parent={"database_id": KNOWLEDGE_DB_ID},
-        properties={
-            "Title": {
-                "title": [{"text": {"content": record.title}}]
-            },
-            "Tags": {
-                "multi_select": tag_options
-            },
-            "Why": {
-                "rich_text": [{"text": {"content": record.why}}]
-            }
-        }
+        parent={"database_id": database_id},
+        properties=properties
     )
     
     return response["id"]
 
-
-def query(filter_dict: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-    """Query knowledge records from Notion.
-    
-    Args:
-        filter_dict: Optional filter parameters for the query
-        
-    Returns:
-        List[Dict]: Raw Notion page results
-        
-    Raises:
-        Exception: If Notion API call fails
-    """
-    notion = get_client()
-        
-    query_params = {"database_id": KNOWLEDGE_DB_ID}
-    if filter_dict:
-        query_params["filter"] = filter_dict
-    
-    response = notion.databases.query(**query_params)
-    return response["results"]
-
-
-def update(page_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-    """Update a knowledge record in Notion.
-    
-    Args:
-        page_id: ID of the page to update
-        data: Properties to update
-        
-    Returns:
-        Dict: Updated page data from Notion
-        
-    Raises:
-        Exception: If Notion API call fails
-    """
-    notion = get_client()
-        
-    response = notion.pages.update(
-        page_id=page_id,
-        properties=data
-    )
-    
-    return response
 
 
 def _parse_json_response(result_text: str) -> dict:
@@ -195,36 +156,12 @@ def create_from_text(text: str) -> str:
     fields = extract_fields(text)
     
     # Handle the "why" prompting if needed
-    final_text = text
     if fields["needs_why"]:
         why_answer = input("Why is this important? ")
-        final_text = f"{text}\nWhy: {why_answer}"
     
     record = Record(
         title=fields["title"],
-        why=final_text,
+        why=why_answer,
         tags=[fields["tag"]]
     )
     return create(record)
-
-
-def delete(page_id: str) -> bool:
-    """Delete (archive) a knowledge record in Notion.
-    
-    Args:
-        page_id: ID of the page to delete
-        
-    Returns:
-        bool: True if deletion was successful
-        
-    Raises:
-        Exception: If Notion API call fails
-    """
-    notion = get_client()
-        
-    response = notion.pages.update(
-        page_id=page_id,
-        archived=True
-    )
-    
-    return response.get("archived", False) 

@@ -5,13 +5,13 @@ Provides a simple interface to store and retrieve health metrics in Notion.
 
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-from config import HEALTH_DB_ID
+import config
+
 from db.notion_client import get_client
-from db.registry import get_database_tags
+from db.registry import get_database_tags, build_notion_properties
 
 
 
@@ -24,8 +24,16 @@ class Record:
 
 # Schema definition for health database
 SCHEMA = {
-    "update_fields": {
-        "Tag": {"select": {"name": "updated_test"}}
+    "database_id": "HEALTH_DB_ID",
+    "fields": {
+        "log": {
+            "notion_name": "Log",
+            "notion_type": "title"
+        },
+        "tag": {
+            "notion_name": "Tag", 
+            "notion_type": "select"
+        }
     }
 }
 
@@ -50,76 +58,19 @@ def create(record: Record) -> str:
         Exception: If Notion API call fails
     """
     notion = get_client()
-        
+    
+    # Build properties from schema
+    properties = build_notion_properties(record, SCHEMA)
+    
+    # Get database ID from config
+    database_id = getattr(config, SCHEMA["database_id"])
+    
     response = notion.pages.create(
-        parent={"database_id": HEALTH_DB_ID},
-        properties={
-            "Log": {
-                "title": [{"text": {"content": record.log}}]
-            },
-            "Tag": {
-                "select": {"name": record.tag}
-            }
-        }
+        parent={"database_id": database_id},
+        properties=properties
     )
     
     return response["id"]
-
-
-def query(filter_dict: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-    """Query health records from Notion.
-    
-    Args:
-        filter_dict: Optional filter parameters for the query
-        
-    Returns:
-        List[Dict]: Raw Notion page results
-        
-    Raises:
-        Exception: If Notion API call fails
-    """
-    notion = get_client()
-        
-    query_params = {"database_id": HEALTH_DB_ID}
-    if filter_dict:
-        query_params["filter"] = filter_dict
-    
-    response = notion.databases.query(**query_params)
-    return response["results"]
-
-
-def update(page_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-    """Update a health record in Notion.
-    
-    Args:
-        page_id: ID of the page to update
-        data: Properties to update
-        
-    Returns:
-        Dict: Updated page data from Notion
-        
-    Raises:
-        Exception: If Notion API call fails
-    """
-    notion = get_client()
-        
-    response = notion.pages.update(
-        page_id=page_id,
-        properties=data
-    )
-    
-    return response
-
-
-def _parse_json_response(result_text: str) -> dict:
-    """Helper to parse JSON response and handle markdown code blocks."""
-    # Handle JSON wrapped in markdown code blocks
-    if result_text.startswith('```json'):
-        result_text = result_text.replace('```json\n', '').replace('\n```', '')
-    elif result_text.startswith('```'):
-        result_text = result_text.replace('```\n', '').replace('\n```', '')
-    
-    return json.loads(result_text)
 
 
 def extract_fields(text: str) -> dict:
@@ -189,23 +140,13 @@ def create_from_text(text: str) -> str:
     return create(record)
 
 
-def delete(page_id: str) -> bool:
-    """Delete (archive) a health record in Notion.
+
+def _parse_json_response(result_text: str) -> dict:
+    """Helper to parse JSON response and handle markdown code blocks."""
+    # Handle JSON wrapped in markdown code blocks
+    if result_text.startswith('```json'):
+        result_text = result_text.replace('```json\n', '').replace('\n```', '')
+    elif result_text.startswith('```'):
+        result_text = result_text.replace('```\n', '').replace('\n```', '')
     
-    Args:
-        page_id: ID of the page to delete
-        
-    Returns:
-        bool: True if deletion was successful
-        
-    Raises:
-        Exception: If Notion API call fails
-    """
-    notion = get_client()
-        
-    response = notion.pages.update(
-        page_id=page_id,
-        archived=True
-    )
-    
-    return response.get("archived", False) 
+    return json.loads(result_text)

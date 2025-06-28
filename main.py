@@ -2,14 +2,17 @@
 
 import sys
 
-from db import knowledge_db
+import config
+from db.notion_client import get_client
 from ingest import cli
 
 
 def smoke_test():
     """Run a smoke test that queries Knowledge DB and prints count."""
     try:
-        results = knowledge_db.query()
+        notion = get_client()
+        response = notion.databases.query(database_id=config.KNOWLEDGE_DB_ID)
+        results = response["results"]
         print(f"Knowledge DB smoke test passed: {len(results)} records found")
         return True
     except Exception as e:
