@@ -102,21 +102,21 @@ def extract_fields(text: str) -> dict:
     client = OpenAI(api_key=config.OPENAI_API_KEY)
     
     prompt = f"""
-You are a knowledge data extractor. Extract relevant fields from this knowledge-related text.
+    You are a knowledge data extractor. Extract relevant fields from this knowledge-related text.
 
-Text: "{text}"
+    Text: "{text}"
 
-Available knowledge tags: {get_database_tags("knowledge")}
+    Available knowledge tags: {get_database_tags("knowledge")}
 
-Rules:
-1. Choose the most appropriate tag from the list above
-2. Use "Misc" if no tag fits well  
-3. Create a concise title (max {config.AI_CONFIG["title_max_length"]} chars)
-4. Set "needs_why" to true if the text lacks explanation/reasoning and would benefit from user clarification
+    Rules:
+    1. Choose the most appropriate tag from the list above
+    2. Use "Misc" if no tag fits well  
+    3. Create a concise title (max {config.AI_CONFIG["title_max_length"]} chars)
+    4. Set "needs_why" to true if the text lacks explanation/reasoning and would benefit from user clarification
 
-Respond with valid JSON:
-{{"tag": "Reference", "title": "Short descriptive title", "needs_why": false}}
-"""
+    Respond with valid JSON:
+    {{"tag": "Reference", "title": "Short descriptive title", "needs_why": false}}
+    """
     
     try:
         response = client.chat.completions.create(
