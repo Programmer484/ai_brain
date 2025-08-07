@@ -2,4 +2,9 @@ notion-client
 python-dotenv
 pytest
 ruff
-openai 
+openai
+sentence-transformers
+qdrant-client
+scikit-learn
+numpy
+notion2md 

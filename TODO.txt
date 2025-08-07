@@ -1,0 +1,5 @@
+- If we edit the subpage of a page in the db it will not be tracked. Solution? Add all pages directly, use shorcuts for subpages. But does notion to markdown take child page shortcuts? If yes, then we'll have duplicates.
+
+- Use archive instead of deleting
+- AI edits/pages should update locally first.
+- When global syncing, we should check the page's individual last sync metadata to see if it is after all edits. (in case AI already edited and synced)
